@@ -36,9 +36,10 @@ def executar_calculo(entry_widget):
         entry_widget.delete("1.0", "end")
         entry_widget.insert("1.0", f"Calculando....")
         entry_widget.update_idletasks()
-        casas = {}
         def tornarTSPLIB(): # Se a entrada for txt, transforma em TSP
-            pontos = []
+            pontos = [] # Todos os pontos do txt
+
+            letraCasas = []
             cordenadas = []
 
             with open(caminho_do_arquivo, "r", encoding="utf-8") as arquivo:
@@ -57,19 +58,17 @@ def executar_calculo(entry_widget):
                         elemento = pontos[i][j]
 
                         if elemento == 'R':
-                            casas[elemento] = (i, j)
                             cord_origem = (i, j)
-                            cordenadas.append(cord_origem)
+                            letraCasas.insert(0, elemento)
+                            cordenadas.insert(0, cord_origem)
 
                         elif elemento != '0':
-                            casas[elemento] = (i, j)
                             cord_casa = (i, j)
+                            letraCasas.append(elemento)                            
                             cordenadas.append(cord_casa)
 
-            
-            
             # Depois de ler o txt, começa a transformação:
-            print(casas)
+            dicCasas = dict(zip(letraCasas,cordenadas))
             n = len(cordenadas)
             dicDistancias = {}
 
@@ -85,25 +84,25 @@ def executar_calculo(entry_widget):
                     tsp.write('\n')
 
             with open ('created_file.tsp', "r", encoding="utf-8") as tsp_read:
-                return tsp_read.readlines(), dicDistancias
+                return tsp_read.readlines(), dicDistancias, dicCasas
         
         
         
 
         def custoCaminho(permutacao, dicDistancias):
-                #caminho = ['R'] + list(permutacao) + ['R']
                 caminho = permutacao.split(' ')
-                print(caminho, '\n')
                 soma_individual = 0
                 for i in range(len(caminho)):
-                    a = caminho[i]
-                    b = caminho[i + 1]
                     try:
-                        soma_individual += dicDistancias[(a, b)]
-                        print(f'distancia da casa {a} para {b} é igual a: {soma_individual}')
+                        a = int(caminho[i])
+                        b = int(caminho[i + 1])
+                        if a < b:
+                            soma_individual += dicDistancias[(a, b)]
+                        elif a > b:
+                            soma_individual += dicDistancias[(b, a)]
                     except:
-                        #soma_individual += dicDistancias[(b, a)]
-                        print('erro')
+                        continue                        
+                        
                 return soma_individual
 
 
@@ -111,12 +110,15 @@ def executar_calculo(entry_widget):
             # Estrutura base completa, precisa ver variavel tamanho
             populacao = []
             lista_iniciar = []
-            for i in range(qtdeCidades):
-                lista_iniciar.append(i)
+
+            for i in range(1, qtdeCidades):
+                lista_iniciar.append(i) # Cria uma lista com n cidades de 1 até n
+
             for i in range(tamanho): 
-                random.shuffle(lista_iniciar) 
-                individuo_base = " ".join(map(str, lista_iniciar))
-                populacao.append(individuo_base)
+                random.shuffle(lista_iniciar)   # Embaralha a lista (novo caminho aleatório)
+                individuo_base = "0 "+" ".join(map(str, lista_iniciar))+" 0"
+
+                populacao.append(individuo_base)    # Transforma numa string e adiciona na população
             
             return populacao
     
@@ -124,25 +126,41 @@ def executar_calculo(entry_widget):
 
         def calculaAptidao(populacao, dicDistancias):
             custos = []
+            menor_custo = np.inf
+            menor_caminho = ''
             for permutacao in populacao:
                 custo_individual = custoCaminho(permutacao, dicDistancias)
                 custos.append(custo_individual)
-            return custos
+                if custo_individual < menor_custo:
+                    menor_custo = custo_individual
+                    menor_caminho = permutacao
+                
+            return custos, menor_custo, menor_caminho
             
 
         
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
-            print(caminho_do_arquivo)
-            tsp, dicDistancias = tornarTSPLIB() 
+            tsp, dicDistancias, dicCasas = tornarTSPLIB() 
+            print(dicCasas)
+            #print(*tsp, sep='')
+            qtdeCidades = len(dicCasas)
+            menores_caminhos_iniciais = {}
+            for i in range(6):
+                populacao = inicializaPopulacao(100, qtdeCidades)
+                custo, menor_custo, menor_caminho = (calculaAptidao(populacao, dicDistancias))
+                menores_caminhos_iniciais[menor_caminho] = menor_custo
             
-            print(*tsp, sep='')
-            print(dicDistancias)
-            qtdeCidades = len(casas)
-            populacao = inicializaPopulacao(5, qtdeCidades)
-            print(calculaAptidao(populacao, dicDistancias))
-        else:
+            # a partir do menor_caminho aplicar as mutações
+            print(menores_caminhos_iniciais)
+        elif caminho_do_arquivo.endswith('.tsp'):
             print('tsp')
+        else:
+            entry_widget.delete("1.0", "end")
+            entry_widget.insert("1.0", f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
+            "EX:\n"
+            "33\n"
+            "C00\n00B\nR0A\n")
 
         # cronometro de execução
         fim_contador = time.perf_counter()
@@ -163,7 +181,6 @@ def executar_calculo(entry_widget):
     except Exception as e:
         if not MemoryError:
             entry_widget.delete("1.0", "end")
-            entry_widget.insert("1.0", "bruh")
             entry_widget.insert("1.0", f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
             "EX:\n"
             "33\n"
