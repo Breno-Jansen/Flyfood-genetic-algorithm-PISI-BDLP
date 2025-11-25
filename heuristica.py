@@ -90,15 +90,15 @@ def executar_calculo(entry_widget):
         
 
         def custoCaminho(permutacao, dicDistancias):
-                caminho = permutacao.split(' ')
-                soma_individual = 0
+                caminho = permutacao.split(' ') # Cria uma lista com cada casa
+                soma_individual = 0 
                 for i in range(len(caminho)):
                     try:
-                        a = int(caminho[i])
+                        a = int(caminho[i])     # Lê a atual e próxima casa
                         b = int(caminho[i + 1])
-                        if a < b:
+                        if a < b:               # Calcula distância
                             soma_individual += dicDistancias[(a, b)]
-                        elif a > b:
+                        elif a > b:   
                             soma_individual += dicDistancias[(b, a)]
                     except:
                         continue                        
@@ -125,17 +125,15 @@ def executar_calculo(entry_widget):
 
 
         def calculaAptidao(populacao, dicDistancias):
-            custos = []
-            menor_custo = np.inf
-            menor_caminho = ''
+            valor_padrao = None
+            custos = [valor_padrao] * len(populacao)
+            i = -1
             for permutacao in populacao:
+                i+=1
                 custo_individual = custoCaminho(permutacao, dicDistancias)
-                custos.append(custo_individual)
-                if custo_individual < menor_custo:
-                    menor_custo = custo_individual
-                    menor_caminho = permutacao
+                custos[i] = custo_individual            
                 
-            return custos, menor_custo, menor_caminho
+            return custos
             
 
         
@@ -145,14 +143,27 @@ def executar_calculo(entry_widget):
             print(dicCasas)
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
-            menores_caminhos_iniciais = {}
-            for i in range(6):
-                populacao = inicializaPopulacao(100, qtdeCidades)
-                custo, menor_custo, menor_caminho = (calculaAptidao(populacao, dicDistancias))
-                menores_caminhos_iniciais[menor_caminho] = menor_custo
+            
+
+            nivel_de_geracoes = 0
+            max_geracoes = 1600
+            tamanho_populacao = 200
+            
+            while True:#(nivel_de_geracoes < tamanho_populacao)
+                nivel_de_geracoes += tamanho_populacao  # # Aumenta o nivel da geração
+                # Calcula a taxa de mutação e crossover (soma deles = 1)
+                taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
+                taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
+                populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
+                custo = (calculaAptidao(populacao, dicDistancias))
+
+                dicCaminhos = dict(zip(populacao, custo)) # Adiciona todos os caminhos num dicionário
+                print(dicCaminhos)
+                break                
+
             
             # a partir do menor_caminho aplicar as mutações
-            print(menores_caminhos_iniciais)
+            
         elif caminho_do_arquivo.endswith('.tsp'):
             print('tsp')
         else:
