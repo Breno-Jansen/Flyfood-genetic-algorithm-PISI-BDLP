@@ -139,12 +139,10 @@ def executar_calculo(entry_widget):
             inversao = int(4*(taxa_mutacao / 5)) # Divide as mutações na proporção 4:1
             insert = int(1*(taxa_mutacao / 5))   # Entre a inversão e insert respectivamente
             
-            print(inversao)
-            print(insert)
-
             mutacoes = []
             novo_custos = []
 
+            #biblioteca gaussiana
             for i in range(inversao):
                 
                 try:
@@ -153,7 +151,6 @@ def executar_calculo(entry_widget):
                     filho1 = [valor_padrao] * len(individuo)
                     filho2 = [valor_padrao] * len(individuo)
                     metade_pai = len(individuo) // 2        
-                    resto_pai = len(individuo) - metade_pai
                     index_aleatorio = random.randint(1, metade_pai) 
                     range_selecionado = index_aleatorio + metade_pai
                     for j in range(index_aleatorio, range_selecionado):
@@ -170,15 +167,18 @@ def executar_calculo(entry_widget):
                             while filho1[pos] is not None:
                                 pos += 1
                             filho1[pos] = cidade
-                            filho1_formatado = " ".join(map(str, filho1))
-                            mutacoes.append(filho1_formatado)
-                                    
-                except:
-                    print('erro')
 
-                
-                print(f'pai: {individuo}')
-                print(f'filho: {filho1}\n')
+                      
+                    filho1_str = " ".join(filho1)
+                    # adiciona na lista de mutações
+                    mutacoes.append(filho1_str)
+
+                    # calcula custo e adiciona
+                    novo_custos.append(custoCaminho(filho1_str, dicDistancias))
+                 
+                except:
+                    print('erro')            
+            return mutacoes, novo_custos
 
                 
 
@@ -199,6 +199,9 @@ def executar_calculo(entry_widget):
             tamanho_populacao = 200
             
             while (nivel_de_geracoes <= max_geracoes):
+                # selecionar pais usando torneio
+                # cruzamento e mutacao em cada par
+                # o melhor sobrevive e o restante sera preenchido usando o torneio
                 # Calcula a taxa de mutação e crossover (soma deles = 1)
                 taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
@@ -209,7 +212,9 @@ def executar_calculo(entry_widget):
 
                 dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
                 
-                mutacao(taxa_mutacao, populacao)
+                mutacoes, novos_custos = mutacao(taxa_mutacao, populacao)
+                #print(mutacoes)
+                print(f'novos custos: {novos_custos}')
                 
 
             
