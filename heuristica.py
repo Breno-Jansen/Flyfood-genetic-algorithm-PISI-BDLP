@@ -135,6 +135,55 @@ def executar_calculo(entry_widget):
                 
             return custos
             
+        def mutacao(taxa_mutacao, caminhos):
+            inversao = int(4*(taxa_mutacao / 5)) # Divide as mutações na proporção 4:1
+            insert = int(1*(taxa_mutacao / 5))   # Entre a inversão e insert respectivamente
+            
+            print(inversao)
+            print(insert)
+
+            mutacoes = []
+            novo_custos = []
+
+            for i in range(inversao):
+                
+                try:
+                    individuo = caminhos[i].split(' ')
+                    valor_padrao = None
+                    filho1 = [valor_padrao] * len(individuo)
+                    filho2 = [valor_padrao] * len(individuo)
+                    metade_pai = len(individuo) // 2        
+                    resto_pai = len(individuo) - metade_pai
+                    index_aleatorio = random.randint(1, metade_pai) 
+                    range_selecionado = index_aleatorio + metade_pai
+                    for j in range(index_aleatorio, range_selecionado):
+                        elemento = individuo[j]
+                        filho1.insert(index_aleatorio, elemento)
+                        filho1.pop(range_selecionado)
+
+                    usados = set([x for x in filho1 if x is not None])
+                    pos = 0
+
+                    for cidade in individuo:
+                        if cidade not in usados:
+                            # achar o próximo None em filho1
+                            while filho1[pos] is not None:
+                                pos += 1
+                            filho1[pos] = cidade
+                            filho1_formatado = " ".join(map(str, filho1))
+                            mutacoes.append(filho1_formatado)
+                                    
+                except:
+                    print('erro')
+
+                
+                print(f'pai: {individuo}')
+                print(f'filho: {filho1}\n')
+
+                
+
+
+
 
         
         # Execução das funções
@@ -149,17 +198,19 @@ def executar_calculo(entry_widget):
             max_geracoes = 1600
             tamanho_populacao = 200
             
-            while True:#(nivel_de_geracoes < tamanho_populacao)
-                nivel_de_geracoes += tamanho_populacao  # # Aumenta o nivel da geração
+            while (nivel_de_geracoes <= max_geracoes):
                 # Calcula a taxa de mutação e crossover (soma deles = 1)
                 taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
-                populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
-                custo = (calculaAptidao(populacao, dicDistancias))
+                nivel_de_geracoes += tamanho_populacao  # Aumenta o nivel da geração
 
-                dicCaminhos = dict(zip(populacao, custo)) # Adiciona todos os caminhos num dicionário
-                print(dicCaminhos)
-                break                
+                populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
+                custos = (calculaAptidao(populacao, dicDistancias))
+
+                dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
+                
+                mutacao(taxa_mutacao, populacao)
+                
 
             
             # a partir do menor_caminho aplicar as mutações
