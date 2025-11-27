@@ -133,119 +133,124 @@ def executar_calculo(entry_widget):
                 
             return custos
             
-        def mutacao(taxa_mutacao, caminhos):
-            inversao = int(4*(taxa_mutacao / 5)) # Divide as mutações na proporção 4:1
-            insert = int(1*(taxa_mutacao / 5))   # Entre a inversão e insert respectivamente
-            
+        def torneioPais(populacao, custos):
+            pass
+        
+        def crossover(pais):
+            pass
+
+        def mutacao(taxa_mutacao, caminhos): # adicionar parametro filhos_cross
+            #inversao_cross = int(2 * (taxa_mutacao / 5))
+            inversao = int(4 * (taxa_mutacao / 5))  # 80% inversão
+            insert = int(1 * (taxa_mutacao / 5))    # 20% inserção
+        
             mutacoes = []
             novos_custos = []
-            print(inversao,'\n',insert)
-            
+        
             # Mutação de inversão
             for i in range(inversao):
-                
                 try:
                     individuo = caminhos[i].split(' ')
                     n_cidades = len(individuo)
-
-                    #valor_padrao = None
-                    #filho_inversao = [valor_padrao] * n_cidades
-#
-                    #comeco = random.randint(1, n_cidades-3)
-#
-                    ## Calcula aleatoriamente o tamanho da inversão 
-                    #range_gauss = random_gaussiano(1, n_cidades//5, n_cidades/2)
-                    ## Seleciona os elementos para a inversão
-                    #for j in range(comeco, range_gauss):
-                    #    elemento = individuo[j]
-                    #    filho_inversao.insert(comeco, elemento)
-                    #    filho_inversao.pop(range_gauss)
-#
-                    #usados = set([x for x in filho_inversao if x is not None])
-                    #pos = 0
-#
-                    #for cidade in individuo:
-                    #    if cidade not in usados:
-                    #        # achar o próximo None em filho_inversao
-                    #        while filho_inversao[pos] is not None:
-                    #            pos += 1
-                    #        filho_inversao[pos] = cidade
-#
-                    #  
-                    #filho_inversao_str = " ".join(filho_inversao)
-                    ## adiciona na lista de mutações
-                    #mutacoes.append(filho_inversao_str)
-#
-                    ## calcula custo e adiciona
-                    #novos_custos.append(custoCaminho(filho_inversao_str, dicDistancias))
+        
                     if n_cidades <= 3:
-                        # muito pequeno para inverter (0 X 0), coloca copia
                         mutacoes.append(" ".join(individuo))
                         novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
                         continue
-                    
-                    # escolher índices entre 1 e n_cidades-2 (não tocar nos zeros)
-                    inicio = random.randint(1, n_cidades - 3)  # inclusive
-                    # tamanho da inversão - usando sua função gaussiana como "tamanho desejado"
-                    tamanho = random_gaussiano(1, max(1, n_cidades // 5), n_cidades - 2)
-                    fim = inicio + tamanho
-                    if fim >= n_cidades - 1:
-                        fim = n_cidades - 2  # garante não ultrapassar borda
-
-                    # se por algum motivo end <= inicio, ajusta
-                    if fim <= inicio:
-                        fim = inicio + 1
-
-                    # aplica inversão do segmento [inicio:end] (end exclusivo)
-                    filho = individuo[:]  # copia
-                    segmento = individuo[inicio:fim]
-                    segmento_revertido = segmento[::-1]
-                    filho[inicio:fim] = segmento_revertido
-
-                    # montagem final e adição
-                    filho_str = " ".join(filho)
-                    mutacoes.append(filho_str)
-                    novos_custos.append(custoCaminho(filho_str, dicDistancias))
-                
-                except:
-                    print('erro1 inversão')   
-
-            try:    
+        
+                    erro = True
+                    tentativas = 0
+                    while erro and tentativas < 30:
+                        tentativas += 1
+        
+                        inicio = random.randint(1, n_cidades - 3)
+        
+                        tamanho = randomGaussiano(
+                            media=2,
+                            desvio_padrao=max(3, n_cidades // 6),
+                            limite_superior=n_cidades // 2
+                        )
+                        tamanho = max(2, tamanho)
+        
+                        if inicio + tamanho >= n_cidades - 1:
+                            tamanho = (n_cidades - 2) - inicio
+        
+                        fim = inicio + tamanho
+        
+                        if fim - inicio < 2:
+                            continue
+        
+                        filho = individuo[:]
+                        segmento = filho[inicio:fim]
+                        filho[inicio:fim] = segmento[::-1]
+        
+                        filho_str = " ".join(filho)
+        
+                        if filho_str != " ".join(individuo):
+                            mutacoes.append(filho_str)
+                            novos_custos.append(custoCaminho(filho_str, dicDistancias))
+                            erro = False
+        
+                    if erro:  # se não conseguir mutar diferente do pai
+                        mutacoes.append(" ".join(individuo))
+                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
+        
+                except Exception as e:
+                    print(f'erro inversão: {e}')
+        
+        
+            # Mutação de inserção
+            try:
                 for l in range(inversao, inversao + insert):
-                    
                     individuo_insert = caminhos[l].split(' ')
                     n_cidades = len(individuo_insert)
-                    valor_padrao = None
-                    
-                    indice1_escolhido = random.randint(1, n_cidades//2)
-                    indice2_escolhido = random.randint(n_cidades//2, n_cidades-1)
-
-                    cidade_inserida = individuo_insert[indice2_escolhido]
-                    individuo_insert.insert(indice1_escolhido + 1, cidade_inserida)
-                    del individuo_insert[indice2_escolhido+1]
-                
-                filho_insert = " ".join(individuo_insert)
-                mutacoes.append(filho_insert)
-                novos_custos.append(custoCaminho(filho_insert, dicDistancias))
-
+        
+                    erro = True
+                    tentativas = 0
+                    while erro and tentativas < 30:
+                        tentativas += 1
+        
+                        pos_origem = random.randint(1, n_cidades - 2)
+                        pos_destino = random.randint(1, n_cidades - 2)
+        
+                        if pos_origem == pos_destino:
+                            continue
+        
+                        filho = individuo_insert[:]
+                        cidade = filho.pop(pos_origem)
+                        filho.insert(pos_destino, cidade)
+        
+                        filho_str = " ".join(filho)
+        
+                        if filho_str != " ".join(individuo_insert):
+                            mutacoes.append(filho_str)
+                            novos_custos.append(custoCaminho(filho_str, dicDistancias))
+                            erro = False
+        
+                    if erro:
+                        mutacoes.append(" ".join(individuo_insert))
+                        novos_custos.append(custoCaminho(" ".join(individuo_insert), dicDistancias))
+        
             except Exception as e:
-                print('erro2 inserção:', e) 
-
+                print('erro inserção:', e)
+        
             return mutacoes, novos_custos
-
-                
-        def random_gaussiano(media, desvio_padrao, limite_superior):
+  
+        def randomGaussiano(media, desvio_padrao, limite_superior):
             """
             Gera um número aleatório gaussiano usando rejeição até estar no limite.
             """
             while True:
-                # Usa numpy.random.normal para maior flexibilidade
                 numero = abs(int(np.random.normal(media, desvio_padrao)))
-                # Ou use random.gauss: numero = random.gauss(media, desvio_padrao)
-                if 0 != numero <= limite_superior:
+
+                if 3 <= numero <= limite_superior:
                     return numero
 
+        def aptidaoFilhos():
+            pass
 
+        def melhorDaGeracao():
+            pass
         
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
@@ -259,7 +264,8 @@ def executar_calculo(entry_widget):
             max_geracoes = 1600
             tamanho_populacao = 200
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
-            
+            print(len(populacao),f'população inicial:\n{populacao}')
+
             while (nivel_de_geracoes <= max_geracoes):
                 # selecionar pais usando torneio
                 # cruzamento e mutacao em cada par
@@ -276,8 +282,9 @@ def executar_calculo(entry_widget):
                 dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
                 if taxa_mutacao != 0:
                     mutacoes, novos_custos = mutacao(taxa_mutacao, populacao)
-                    print(f'mutações: \n{mutacoes}\npopulação: \n{populacao}')
-                    print('\n\n\n\n\n')
+                    print(len(mutacoes),f'mutantes:\n{mutacoes}')
+                    #print(f'mutações: \n{mutacoes}\npopulação: \n{populacao}')
+                    #print('\n\n\n\n\n')
                 if taxa_crossover != 0:
                     # ADICIONAR FUNCAO CROSSOVER
                     pass
@@ -315,6 +322,7 @@ def executar_calculo(entry_widget):
 
         
     except Exception as e:
+        print(e)
         if not MemoryError:
             entry_widget.delete("1.0", "end")
             entry_widget.insert("1.0", f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
