@@ -1,7 +1,5 @@
 import os
 from tkinter import filedialog
-import itertools
-import re
 import numpy as np
 import time
 import random
@@ -140,49 +138,112 @@ def executar_calculo(entry_widget):
             insert = int(1*(taxa_mutacao / 5))   # Entre a inversão e insert respectivamente
             
             mutacoes = []
-            novo_custos = []
-
-            #biblioteca gaussiana
+            novos_custos = []
+            print(inversao,'\n',insert)
+            
+            # Mutação de inversão
             for i in range(inversao):
                 
                 try:
                     individuo = caminhos[i].split(' ')
-                    valor_padrao = None
-                    filho1 = [valor_padrao] * len(individuo)
-                    filho2 = [valor_padrao] * len(individuo)
-                    metade_pai = len(individuo) // 2        
-                    index_aleatorio = random.randint(1, metade_pai) 
-                    range_selecionado = index_aleatorio + metade_pai
-                    for j in range(index_aleatorio, range_selecionado):
-                        elemento = individuo[j]
-                        filho1.insert(index_aleatorio, elemento)
-                        filho1.pop(range_selecionado)
+                    n_cidades = len(individuo)
 
-                    usados = set([x for x in filho1 if x is not None])
-                    pos = 0
+                    #valor_padrao = None
+                    #filho_inversao = [valor_padrao] * n_cidades
+#
+                    #comeco = random.randint(1, n_cidades-3)
+#
+                    ## Calcula aleatoriamente o tamanho da inversão 
+                    #range_gauss = random_gaussiano(1, n_cidades//5, n_cidades/2)
+                    ## Seleciona os elementos para a inversão
+                    #for j in range(comeco, range_gauss):
+                    #    elemento = individuo[j]
+                    #    filho_inversao.insert(comeco, elemento)
+                    #    filho_inversao.pop(range_gauss)
+#
+                    #usados = set([x for x in filho_inversao if x is not None])
+                    #pos = 0
+#
+                    #for cidade in individuo:
+                    #    if cidade not in usados:
+                    #        # achar o próximo None em filho_inversao
+                    #        while filho_inversao[pos] is not None:
+                    #            pos += 1
+                    #        filho_inversao[pos] = cidade
+#
+                    #  
+                    #filho_inversao_str = " ".join(filho_inversao)
+                    ## adiciona na lista de mutações
+                    #mutacoes.append(filho_inversao_str)
+#
+                    ## calcula custo e adiciona
+                    #novos_custos.append(custoCaminho(filho_inversao_str, dicDistancias))
+                    if n_cidades <= 3:
+                        # muito pequeno para inverter (0 X 0), coloca copia
+                        mutacoes.append(" ".join(individuo))
+                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
+                        continue
+                    
+                    # escolher índices entre 1 e n_cidades-2 (não tocar nos zeros)
+                    inicio = random.randint(1, n_cidades - 3)  # inclusive
+                    # tamanho da inversão - usando sua função gaussiana como "tamanho desejado"
+                    tamanho = random_gaussiano(1, max(1, n_cidades // 5), n_cidades - 2)
+                    fim = inicio + tamanho
+                    if fim >= n_cidades - 1:
+                        fim = n_cidades - 2  # garante não ultrapassar borda
 
-                    for cidade in individuo:
-                        if cidade not in usados:
-                            # achar o próximo None em filho1
-                            while filho1[pos] is not None:
-                                pos += 1
-                            filho1[pos] = cidade
+                    # se por algum motivo end <= inicio, ajusta
+                    if fim <= inicio:
+                        fim = inicio + 1
 
-                      
-                    filho1_str = " ".join(filho1)
-                    # adiciona na lista de mutações
-                    mutacoes.append(filho1_str)
+                    # aplica inversão do segmento [inicio:end] (end exclusivo)
+                    filho = individuo[:]  # copia
+                    segmento = individuo[inicio:fim]
+                    segmento_revertido = segmento[::-1]
+                    filho[inicio:fim] = segmento_revertido
 
-                    # calcula custo e adiciona
-                    novo_custos.append(custoCaminho(filho1_str, dicDistancias))
-                 
+                    # montagem final e adição
+                    filho_str = " ".join(filho)
+                    mutacoes.append(filho_str)
+                    novos_custos.append(custoCaminho(filho_str, dicDistancias))
+                
                 except:
-                    print('erro')            
-            return mutacoes, novo_custos
+                    print('erro1 inversão')   
+
+            try:    
+                for l in range(inversao, inversao + insert):
+                    
+                    individuo_insert = caminhos[l].split(' ')
+                    n_cidades = len(individuo_insert)
+                    valor_padrao = None
+                    
+                    indice1_escolhido = random.randint(1, n_cidades//2)
+                    indice2_escolhido = random.randint(n_cidades//2, n_cidades-1)
+
+                    cidade_inserida = individuo_insert[indice2_escolhido]
+                    individuo_insert.insert(indice1_escolhido + 1, cidade_inserida)
+                    del individuo_insert[indice2_escolhido+1]
+                
+                filho_insert = " ".join(individuo_insert)
+                mutacoes.append(filho_insert)
+                novos_custos.append(custoCaminho(filho_insert, dicDistancias))
+
+            except Exception as e:
+                print('erro2 inserção:', e) 
+
+            return mutacoes, novos_custos
 
                 
-
-
+        def random_gaussiano(media, desvio_padrao, limite_superior):
+            """
+            Gera um número aleatório gaussiano usando rejeição até estar no limite.
+            """
+            while True:
+                # Usa numpy.random.normal para maior flexibilidade
+                numero = abs(int(np.random.normal(media, desvio_padrao)))
+                # Ou use random.gauss: numero = random.gauss(media, desvio_padrao)
+                if 0 != numero <= limite_superior:
+                    return numero
 
 
         
@@ -193,28 +254,36 @@ def executar_calculo(entry_widget):
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
             
-
+            
             nivel_de_geracoes = 0
             max_geracoes = 1600
             tamanho_populacao = 200
+            populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             
             while (nivel_de_geracoes <= max_geracoes):
                 # selecionar pais usando torneio
                 # cruzamento e mutacao em cada par
                 # o melhor sobrevive e o restante sera preenchido usando o torneio
                 # Calcula a taxa de mutação e crossover (soma deles = 1)
+                
                 taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
                 nivel_de_geracoes += tamanho_populacao  # Aumenta o nivel da geração
 
-                populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
+                
                 custos = (calculaAptidao(populacao, dicDistancias))
 
                 dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
-                
-                mutacoes, novos_custos = mutacao(taxa_mutacao, populacao)
+                if taxa_mutacao != 0:
+                    mutacoes, novos_custos = mutacao(taxa_mutacao, populacao)
+                    print(f'mutações: \n{mutacoes}\npopulação: \n{populacao}')
+                    print('\n\n\n\n\n')
+                if taxa_crossover != 0:
+                    # ADICIONAR FUNCAO CROSSOVER
+                    pass
+
                 #print(mutacoes)
-                print(f'novos custos: {novos_custos}')
+                #print(f'novos custos: {novos_custos}')
                 
 
             
