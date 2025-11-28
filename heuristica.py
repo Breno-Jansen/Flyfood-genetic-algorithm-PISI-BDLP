@@ -136,8 +136,73 @@ def executar_calculo(entry_widget):
         def torneioPais(populacao, custos, taxa_crossover):
             pass
         
-        def crossover(pais, taxa_crossover):
-            pass
+        def crossover(caminho1, caminho2):
+            # transforma pais de string para lista
+            lista = caminho1.split(' ')
+            lista_pai = caminho2.split(' ')
+
+            # tamanho sem contar o 0 inicial/final
+            tamanho_lista = len(lista)
+
+            # nova lista vazia (mantendo 0 nas pontas)
+            lista_nova = [None] * tamanho_lista
+            lista_nova[0] = '0'
+            lista_nova[-1] = '0'
+            divisao_corte = tamanho_lista // 2
+
+            # crossover só acontece entre as cidades 1..n-2
+            indice = random.randint(1, tamanho_lista - divisao_corte - 1)   # mesma lógica do seu randint(0,5)
+            corte_fim = indice + divisao_corte
+
+            # copia trecho do pai 1
+            for i in range(indice, corte_fim):
+                lista_nova[i] = lista[i]
+
+            # índices de leitura circular dos pais
+            novo_indice = corte_fim % tamanho_lista
+            indice_listaUm = corte_fim % tamanho_lista
+
+            # preenche o resto
+            for i in range(1, tamanho_lista-1):   # evita posições 0 e final
+                if lista_nova[i] is None:
+                    while True:
+                        elemento_pai = lista_pai[novo_indice]
+
+                        # elemento do pai 2 não existe no filho -> coloca
+                        if elemento_pai not in lista_nova:
+                            lista_nova[i] = elemento_pai
+                            novo_indice = (novo_indice + 1) % tamanho_lista
+                            break
+
+                        # elemento já existe -> tenta elemento do pai 1
+                        else:
+                            elemento_principal = lista[indice_listaUm]
+
+                            if elemento_principal not in lista_nova:
+                                lista_nova[i] = elemento_principal
+                                indice_listaUm = (indice_listaUm + 1) % tamanho_lista
+                                break
+
+                            # continua procurando
+                            novo_indice = (novo_indice + 1) % tamanho_lista
+                            indice_listaUm = (indice_listaUm + 1) % tamanho_lista
+
+            # converte de volta para string
+            return " ".join(lista_nova)
+        
+        def crossover_populacao(caminhos):
+            filhos = []
+            custos_filhos = []
+            for i in range(2): # cada dupla de pais gera 2 filhos
+                for j in range(0, len(caminhos), 2):
+                    pai1 = caminhos[j]
+                    pai2 = caminhos[j + 1] if j + 1 < len(caminhos) else caminhos[i] 
+
+                    filho = crossover(pai1, pai2)
+                    filhos.append(filho)
+                    custos_filhos.append(custoCaminho(filho, dicDistancias))
+            
+            return filhos, custos_filhos
 
         def mutacao(taxa_mutacao, caminhos): # adicionar parametro filhos_cross
             prop_inversao_cross = 0.50
@@ -271,12 +336,12 @@ def executar_calculo(entry_widget):
             
             
             nivel_de_geracoes = 0
-            max_geracoes = 1600
+            max_geracoes = 200
             tamanho_populacao = 200
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             custos = (calculaAptidao(populacao, dicDistancias))
             dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
-            #print(len(populacao),f'população inicial:\n{populacao}')
+            print(len(populacao),f'população inicial:\n{populacao}')
 
             while (nivel_de_geracoes <= max_geracoes):                
             
@@ -284,14 +349,14 @@ def executar_calculo(entry_widget):
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
                 nivel_de_geracoes += tamanho_populacao  # Aumenta o nivel da geração
                 
-
-
-                
-
                 if taxa_crossover != 0:
                     #pais = torneioPais(populacao, custos, taxa_crossover)
-                    #filhos = crossover(pais, taxa_crossover)
-                    pass
+                    filhos_cross, custos_filhos_cross = crossover_populacao(populacao)  # Ajuste: passar a quantidade
+                    print(f"{len(filhos_cross)} filhos gerados por crossover: \n{filhos_cross}")
+
+                    #for i, filho in enumerate(filhos_cross):
+                    #    print(f"  Filho {i+1}: {filho}, Custo: {custos_filhos_cross[i]}")
+
                 if taxa_mutacao != 0:
                     filhos, novos_custos = mutacao(taxa_mutacao, populacao)
                 
