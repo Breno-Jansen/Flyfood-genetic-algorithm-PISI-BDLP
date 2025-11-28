@@ -133,13 +133,22 @@ def executar_calculo(entry_widget):
                 
             return custos
             
-        def torneioPais(populacao, custos):
+        def torneioPais(populacao, custos, taxa_crossover):
             pass
         
-        def crossover(pais):
+        def crossover(pais, taxa_crossover):
             pass
 
         def mutacao(taxa_mutacao, caminhos): # adicionar parametro filhos_cross
+            prop_inversao_cross = 0.50
+            prop_inversao_pop = 0.30
+            prop_insert_pop = 0.20
+
+            inversao_cross = int(taxa_mutacao * prop_inversao_cross)
+            inversao_pop = int(taxa_mutacao * prop_inversao_pop)
+            insert_pop = int(taxa_mutacao - (inversao_cross + inversao_pop))
+
+            
             #inversao_cross = int(2 * (taxa_mutacao / 5))
             inversao = int(4 * (taxa_mutacao / 5))  # 80% inversão
             insert = int(1 * (taxa_mutacao / 5))    # 20% inserção
@@ -246,12 +255,13 @@ def executar_calculo(entry_widget):
                 if 3 <= numero <= limite_superior:
                     return numero
 
-        def aptidaoFilhos():
-            pass
 
         def melhorDaGeracao():
             pass
         
+        def atualizarPopulacao(populacao, filhos, custos, novos_custos):
+            pass
+            
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
             tsp, dicDistancias, dicCasas = tornarTSPLIB() 
@@ -264,37 +274,36 @@ def executar_calculo(entry_widget):
             max_geracoes = 1600
             tamanho_populacao = 200
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
-            print(len(populacao),f'população inicial:\n{populacao}')
+            custos = (calculaAptidao(populacao, dicDistancias))
+            dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
+            #print(len(populacao),f'população inicial:\n{populacao}')
 
-            while (nivel_de_geracoes <= max_geracoes):
-                # selecionar pais usando torneio
-                # cruzamento e mutacao em cada par
-                # o melhor sobrevive e o restante sera preenchido usando o torneio
-                # Calcula a taxa de mutação e crossover (soma deles = 1)
-                
+            while (nivel_de_geracoes <= max_geracoes):                
+            
                 taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
                 nivel_de_geracoes += tamanho_populacao  # Aumenta o nivel da geração
+                
+
 
                 
-                custos = (calculaAptidao(populacao, dicDistancias))
 
-                dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
-                if taxa_mutacao != 0:
-                    mutacoes, novos_custos = mutacao(taxa_mutacao, populacao)
-                    print(len(mutacoes),f'mutantes:\n{mutacoes}')
-                    #print(f'mutações: \n{mutacoes}\npopulação: \n{populacao}')
-                    #print('\n\n\n\n\n')
                 if taxa_crossover != 0:
-                    # ADICIONAR FUNCAO CROSSOVER
+                    #pais = torneioPais(populacao, custos, taxa_crossover)
+                    #filhos = crossover(pais, taxa_crossover)
                     pass
-
-                #print(mutacoes)
-                #print(f'novos custos: {novos_custos}')
+                if taxa_mutacao != 0:
+                    filhos, novos_custos = mutacao(taxa_mutacao, populacao)
                 
+                #populacao = atualizarPopulacao(populacao, filhos, custos, novos_custos)
+                #melhor_caminho, melhor_da_geracao = melhorDaGeracao()
+
+
+            # cronometro de execução
+            fim_contador = time.perf_counter()
+            tempo_de_execucao = fim_contador - contador_de_tempo  
 
             
-            # a partir do menor_caminho aplicar as mutações
             
         elif caminho_do_arquivo.endswith('.tsp'):
             print('tsp')
@@ -305,9 +314,7 @@ def executar_calculo(entry_widget):
             "33\n"
             "C00\n00B\nR0A\n")
 
-        # cronometro de execução
-        fim_contador = time.perf_counter()
-        tempo_de_execucao = fim_contador - contador_de_tempo
+
 
         # Saída final
         output_formatado = (
