@@ -19,7 +19,7 @@ def selecionar_arquivo(entry_widget):
         entry_widget.delete("1.0", "end")
         entry_widget.insert("1.0", f"Arquivo carregado:\n{os.path.basename(caminho_do_arquivo)}")
 
-
+letraCasas = []
 def executar_calculo(entry_widget):
     contador_de_tempo = time.perf_counter()    
     global caminho_do_arquivo
@@ -37,7 +37,7 @@ def executar_calculo(entry_widget):
         def tornarTSPLIB(): # Se a entrada for txt, transforma em TSP
             pontos = [] # Todos os pontos do txt
 
-            letraCasas = []
+            
             cordenadas = []
 
             with open(caminho_do_arquivo, "r", encoding="utf-8") as arquivo:
@@ -133,9 +133,30 @@ def executar_calculo(entry_widget):
                 
             return custos
             
-        def torneioPais(populacao, custos, taxa_crossover):
-            pass
+        def torneioPais(populacao, custos):
+            """
+            Seleção por torneio binário:
+            Escolhe dois indivíduos aleatórios, compara os custos e retorna o de menor custo (melhor).
+            Repete até formar uma lista com tamanho taxa_crossover.
+            """
+            pais = []
         
+            # taxa_crossover é dinâmica no seu código, então convertemos para inteiro
+            qtde_pais = int(taxa_crossover)
+        
+            for _ in range(qtde_pais):
+                # escolhe dois candidatos aleatórios para o torneio
+                idx1 = random.randint(0, len(populacao) - 1)
+                idx2 = random.randint(0, len(populacao) - 1)
+        
+                # melhor custo vence
+                if custos[idx1] <= custos[idx2]:
+                    pais.append(populacao[idx1])
+                else:
+                    pais.append(populacao[idx2])
+        
+            return pais
+                
         def crossover(caminho1, caminho2):
             # transforma pais de string para lista
             lista = caminho1.split(' ')
@@ -190,21 +211,65 @@ def executar_calculo(entry_widget):
             # converte de volta para string
             return " ".join(lista_nova)
         
-        def crossover_populacao(caminhos):
+        def crossover_populacao(pais, taxa_crossover):
             filhos = []
             custos_filhos = []
-            for i in range(2): # cada dupla de pais gera 2 filhos
-                for j in range(0, len(caminhos), 2):
-                    pai1 = caminhos[j]
-                    pai2 = caminhos[j + 1] if j + 1 < len(caminhos) else caminhos[i] 
-
-                    filho = crossover(pai1, pai2)
-                    filhos.append(filho)
-                    custos_filhos.append(custoCaminho(filho, dicDistancias))
+            indice = 0
             
+            while len(filhos) < taxa_crossover:
+                pai1 = pais[indice % len(pais)]
+                pai2 = pais[(indice + 1) % len(pais)]
+                filho = crossover(pai1, pai2)
+                filhos.append(filho)
+                custos_filhos.append(custoCaminho(filho, dicDistancias))
+                indice += 1
+            #print('crossovers: ', len(filhos))
             return filhos, custos_filhos
 
-        def mutacao(taxa_mutacao, caminhos): # adicionar parametro filhos_cross
+        def inversao(caminhos, mutacoes, novos_custos, prop):
+            total = min(prop, len(caminhos))
+            for i in range(total):
+                try:
+                    individuo = caminhos[i].split(' ')
+                    n_cidades = len(individuo)
+                    if n_cidades <= 3:
+                        mutacoes.append(" ".join(individuo))
+                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
+                        continue
+
+                    erro = True
+                    tentativas = 0
+                    while erro and tentativas < 30:
+                        tentativas += 1
+                        inicio = random.randint(1, n_cidades - 3)
+                        tamanho = randomGaussiano(
+                            media=2,
+                            desvio_padrao=max(3, n_cidades // 6),
+                            limite_superior=n_cidades // 2
+                        )
+                        tamanho = max(2, tamanho)
+                        if inicio + tamanho >= n_cidades - 1:
+                            tamanho = (n_cidades - 2) - inicio
+                        fim = inicio + tamanho
+                        if fim - inicio < 2:
+                            continue
+                        filho = individuo[:]
+                        segmento = filho[inicio:fim]
+                        filho[inicio:fim] = segmento[::-1]
+                        filho_str = " ".join(filho)
+                        if filho_str != " ".join(individuo):
+                            mutacoes.append(filho_str)
+                            novos_custos.append(custoCaminho(filho_str, dicDistancias))
+                            erro = False
+
+                    if erro:  # se não conseguir mutar diferente do pai
+                        mutacoes.append(" ".join(individuo))
+                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
+                except Exception as e:
+                    print(f'erro inversão (i={i}, total={total}): {e}')
+
+                
+        def mutacao(taxa_mutacao, caminhos, filhos_cross):
             prop_inversao_cross = 0.50
             prop_inversao_pop = 0.30
             prop_insert_pop = 0.20
@@ -213,101 +278,56 @@ def executar_calculo(entry_widget):
             inversao_pop = int(taxa_mutacao * prop_inversao_pop)
             insert_pop = int(taxa_mutacao - (inversao_cross + inversao_pop))
 
-            
-            #inversao_cross = int(2 * (taxa_mutacao / 5))
-            inversao = int(4 * (taxa_mutacao / 5))  # 80% inversão
-            insert = int(1 * (taxa_mutacao / 5))    # 20% inserção
-        
             mutacoes = []
             novos_custos = []
-        
-            # Mutação de inversão
-            for i in range(inversao):
-                try:
-                    individuo = caminhos[i].split(' ')
-                    n_cidades = len(individuo)
-        
-                    if n_cidades <= 3:
-                        mutacoes.append(" ".join(individuo))
-                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
-                        continue
-        
-                    erro = True
-                    tentativas = 0
-                    while erro and tentativas < 30:
-                        tentativas += 1
-        
-                        inicio = random.randint(1, n_cidades - 3)
-        
-                        tamanho = randomGaussiano(
-                            media=2,
-                            desvio_padrao=max(3, n_cidades // 6),
-                            limite_superior=n_cidades // 2
-                        )
-                        tamanho = max(2, tamanho)
-        
-                        if inicio + tamanho >= n_cidades - 1:
-                            tamanho = (n_cidades - 2) - inicio
-        
-                        fim = inicio + tamanho
-        
-                        if fim - inicio < 2:
-                            continue
-        
-                        filho = individuo[:]
-                        segmento = filho[inicio:fim]
-                        filho[inicio:fim] = segmento[::-1]
-        
-                        filho_str = " ".join(filho)
-        
-                        if filho_str != " ".join(individuo):
-                            mutacoes.append(filho_str)
-                            novos_custos.append(custoCaminho(filho_str, dicDistancias))
-                            erro = False
-        
-                    if erro:  # se não conseguir mutar diferente do pai
-                        mutacoes.append(" ".join(individuo))
-                        novos_custos.append(custoCaminho(" ".join(individuo), dicDistancias))
-        
-                except Exception as e:
-                    print(f'erro inversão: {e}')
-        
-        
-            # Mutação de inserção
+
+            # inversão população (limitada dentro da função inversao)
+            inversao(caminhos, mutacoes, novos_custos, inversao_pop)
+
+            # inversão filhos crossover (apenas se houver filhos)
+            if filhos_cross:
+                inversao(filhos_cross, mutacoes, novos_custos, inversao_cross)
+
+            # inserção: não tentar mais do que há em 'caminhos'
+            max_inserts = min(insert_pop, len(caminhos))
             try:
-                for l in range(inversao, inversao + insert):
+                for l in range(max_inserts):
                     individuo_insert = caminhos[l].split(' ')
                     n_cidades = len(individuo_insert)
-        
+
                     erro = True
                     tentativas = 0
                     while erro and tentativas < 30:
                         tentativas += 1
-        
                         pos_origem = random.randint(1, n_cidades - 2)
                         pos_destino = random.randint(1, n_cidades - 2)
-        
                         if pos_origem == pos_destino:
                             continue
-        
                         filho = individuo_insert[:]
                         cidade = filho.pop(pos_origem)
                         filho.insert(pos_destino, cidade)
-        
                         filho_str = " ".join(filho)
-        
                         if filho_str != " ".join(individuo_insert):
                             mutacoes.append(filho_str)
                             novos_custos.append(custoCaminho(filho_str, dicDistancias))
                             erro = False
-        
+
                     if erro:
                         mutacoes.append(" ".join(individuo_insert))
                         novos_custos.append(custoCaminho(" ".join(individuo_insert), dicDistancias))
-        
+                    # garantir número exato
+                if len(mutacoes) > taxa_mutacao:
+                    mutacoes = mutacoes[:taxa_mutacao]
+                
+                elif len(mutacoes) < taxa_mutacao:
+                    while len(mutacoes) < taxa_mutacao:
+                        mutacoes.append(caminhos[random.randint(0, len(caminhos) - 1)])
+                        novos_custos.append(custoCaminho(mutacoes[-1], dicDistancias))
+
             except Exception as e:
                 print('erro inserção:', e)
-        
+
+            #print('mutações: ', len(mutacoes))
             return mutacoes, novos_custos
   
         def randomGaussiano(media, desvio_padrao, limite_superior):
@@ -321,11 +341,41 @@ def executar_calculo(entry_widget):
                     return numero
 
 
-        def melhorDaGeracao():
-            pass
+        def melhorDaGeracao(populacao, custos):
+            """
+            Retorna uma tupla contendo:
+            (melhor_caminho, melhor_custo)
+            """
+            melhor_indice = custos.index(min(custos))
+            melhor_caminho = populacao[melhor_indice]
+            melhor_custo = custos[melhor_indice]
+            return melhor_caminho, melhor_custo
+
         
         def atualizarPopulacao(populacao, filhos, custos, novos_custos):
-            pass
+            """
+            Usa elitismo: combina a população atual com filhos da mutação,
+            ordena pelo custo e mantém somente os 'tamanho_populacao' melhores.
+            """
+            global tamanho_populacao
+
+            # junta caminhos e custos dos pais + novos indivíduos
+            nova_pop = populacao + filhos
+            nova_custos = custos + novos_custos
+
+            # empacota, ordena e desempacota
+            unidos = list(zip(nova_pop, nova_custos))
+            unidos.sort(key=lambda x: x[1])   # menor custo primeiro
+
+            # mantém só os top 200
+            selecionados = unidos[:tamanho_populacao]
+
+            # separa novamente caminhos e custos
+            populacao = [caminho for caminho, custo in selecionados]
+            custos = [custo for caminho, custo in selecionados]
+
+            return populacao, custos
+
             
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
@@ -334,39 +384,36 @@ def executar_calculo(entry_widget):
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
             
-            
+            global tamanho_populacao
             nivel_de_geracoes = 0
-            max_geracoes = 200
+            max_geracoes = 1600
             tamanho_populacao = 200
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             custos = (calculaAptidao(populacao, dicDistancias))
             dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
-            print(len(populacao),f'população inicial:\n{populacao}')
-
+            #print(len(populacao),f'população inicial:\n{populacao}')
+            filhos_cross = None
             while (nivel_de_geracoes <= max_geracoes):                
             
-                taxa_mutacao = tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes))
+                taxa_mutacao = int(tamanho_populacao * (1 -(nivel_de_geracoes / max_geracoes)))
                 taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
                 nivel_de_geracoes += tamanho_populacao  # Aumenta o nivel da geração
                 
                 if taxa_crossover != 0:
-                    #pais = torneioPais(populacao, custos, taxa_crossover)
-                    filhos_cross, custos_filhos_cross = crossover_populacao(populacao)  # Ajuste: passar a quantidade
-                    print(f"{len(filhos_cross)} filhos gerados por crossover: \n{filhos_cross}")
+                    pais = torneioPais(populacao, custos)           # Seleciona num torneio binário
+                    filhos_cross, custos_filhos_cross = crossover_populacao(pais, taxa_crossover)  # Ajuste: passar a quantidade
+                    #print(f"{len(filhos_cross)} filhos gerados por crossover: \n{filhos_cross}")
 
                     #for i, filho in enumerate(filhos_cross):
                     #    print(f"  Filho {i+1}: {filho}, Custo: {custos_filhos_cross[i]}")
 
                 if taxa_mutacao != 0:
-                    filhos, novos_custos = mutacao(taxa_mutacao, populacao)
+                    filhos, novos_custos = mutacao(taxa_mutacao, populacao, filhos_cross)
                 
-                #populacao = atualizarPopulacao(populacao, filhos, custos, novos_custos)
-                #melhor_caminho, melhor_da_geracao = melhorDaGeracao()
+                populacao, custos = atualizarPopulacao(populacao, filhos, custos, novos_custos)
+                melhor_caminho, melhor_custo = melhorDaGeracao(populacao, custos)
 
 
-            # cronometro de execução
-            fim_contador = time.perf_counter()
-            tempo_de_execucao = fim_contador - contador_de_tempo  
 
             
             
@@ -379,12 +426,19 @@ def executar_calculo(entry_widget):
             "33\n"
             "C00\n00B\nR0A\n")
 
+        # cronometro de execução
+        fim_contador = time.perf_counter()
+        tempo_de_execucao = fim_contador - contador_de_tempo  
 
+        
+        caminho_numerado = melhor_caminho.split(' ')
+        caminho_letrado = [letraCasas[int(cidade)] for cidade in caminho_numerado]
+        caminho_formatado = " -> ".join(caminho_letrado)
 
         # Saída final
         output_formatado = (
-            f""
-            f""
+            f"Melhor caminho encontrado:\n{caminho_formatado}\n"
+            f"Custo do caminho:\n{melhor_custo}\n"
             f"Tempo gasto no cálculo:\n{tempo_de_execucao:.4f} s"
         )
 
