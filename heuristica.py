@@ -33,7 +33,7 @@ def executar_calculo(entry_widget):
     try:
             
         entry_widget.delete("1.0", "end")
-        entry_widget.insert("1.0", f"Calculando....")
+        entry_widget.insert("1.0", f"Calculando.")
         entry_widget.update_idletasks()
         def tornarTSPLIB(): # Se a entrada for txt, transforma em TSP
             pontos = [] # Todos os pontos do txt
@@ -132,7 +132,7 @@ def executar_calculo(entry_widget):
         def inicializaPopulacao(tamanho, qtdeCidades):
             populacao = []
             lista_iniciar = list(range(qtdeCidades))  # todas as cidades
-            print(lista_iniciar)
+            #print(lista_iniciar)
             for _ in range(tamanho):
                 # escolhe ponto inicial aleatório
                 ponto_inicial = random.choice(lista_iniciar)
@@ -145,7 +145,7 @@ def executar_calculo(entry_widget):
                 individuo_base = str(ponto_inicial) + " " + " ".join(map(str, restantes)) + " " + str(ponto_inicial)
 
                 populacao.append(individuo_base)
-                print(individuo_base)
+                #print(individuo_base)
             return populacao
     
 
@@ -163,7 +163,7 @@ def executar_calculo(entry_widget):
             melhor_custo = custos[melhor_indice]
             return custos, melhor_caminho, melhor_custo
             
-        def torneioPais(populacao, custos, taxa_crossover, melhor_caminho=None, k=3,):
+        def torneioPais(populacao, custos, taxa_crossover, melhor_caminho=None, k=2,):
             """
             Seleção por torneio com fitness integrado.
             Fitness = 1 / custo  (menor custo ⇒ maior aptidão)
@@ -468,6 +468,9 @@ def executar_calculo(entry_widget):
             esperado = set(range(qtdeCidades)) - {s}
             return set(miolo) == esperado and len(miolo) == len(esperado)
 
+        def mensagens(entry_widget, mensagem):
+            entry_widget.insert("1.0", mensagem)
+            entry_widget.update_idletasks()
 
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
@@ -476,7 +479,7 @@ def executar_calculo(entry_widget):
             populacao = []
 
             tsp, dicDistancias, dicCasas = tornarTSPLIB() 
-            print(dicCasas)
+            #print(dicCasas)
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
             
@@ -514,7 +517,7 @@ def executar_calculo(entry_widget):
                 melhores_das_geracoes.append(melhor_caminho)
                 melhores_custos_geracoes.append(melhor_custo)
                 #print("→ filhos crossover:", len(filhos_cross))
-                print(len(filhos))
+                #print(len(filhos))
             print(melhores_custos_geracoes)
             melhor_camino, melhor_custo = melhorDaGeracao(melhores_das_geracoes, melhores_custos_geracoes)
             caminho_numerado = melhor_caminho.split(' ')
@@ -530,8 +533,8 @@ def executar_calculo(entry_widget):
             qtdeCidades = len(dicCasas)
             
             nivel_de_geracoes = 1
-            max_geracoes = 80
-            tamanho_populacao = 300
+            max_geracoes = 600
+            tamanho_populacao = 800
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             custos, melhor_caminho, melhor_custo = (calculaAptidao(populacao, dicDistancias))
             dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
@@ -543,7 +546,7 @@ def executar_calculo(entry_widget):
             
                 #taxa_mutacao = int(tamanho_populacao * (1 - (nivel_de_geracoes / max_geracoes)))
                 #taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
-                taxa_mutacao = int(tamanho_populacao * (random.randint(2, 10)*0.01))
+                taxa_mutacao = int(tamanho_populacao * (random.randint(1, 6)*0.01))
                 taxa_crossover = int(tamanho_populacao * 0.90)
                 nivel_de_geracoes += 1  # Aumenta o nivel da geração
                 
@@ -563,11 +566,32 @@ def executar_calculo(entry_widget):
                 melhores_das_geracoes.append(melhor_caminho)
                 melhores_custos_geracoes.append(melhor_custo)
                 #print("→ filhos crossover:", len(filhos_cross))
-                print(len(filhos))
+                #print(len(filhos))
+                if nivel_de_geracoes == max_geracoes//5:
+                    mensagem = (
+                        f"👶 gerando individuos..\n\n"
+                    )
+                    mensagens(entry_widget, mensagem)
+                if nivel_de_geracoes == 2*(max_geracoes//5):
+                    mensagem = (
+                        f"🏆 fazendo torneios...\n\n"
+                    )
+                    mensagens(entry_widget, mensagem)
+                if nivel_de_geracoes == 3*(max_geracoes//5):
+                    mensagem = (
+                        f"❤️ pais cruzando....\n\n"
+                    )
+                    mensagens(entry_widget, mensagem)
+                if nivel_de_geracoes == 4*(max_geracoes//5):
+                    mensagem = (
+                        f"🧬 mutantes aparecendo.....\n\n"
+                    )
+                    mensagens(entry_widget, mensagem)
             print(melhores_custos_geracoes)
             melhor_camino, melhor_custo = melhorDaGeracao(melhores_das_geracoes, melhores_custos_geracoes)
             caminho_numerado = list(map(int, melhor_caminho.split(' ')))
-            caminho_formatado = " -> ".join(map(str, caminho_numerado))
+            caminho_formatado = " -> ".join(map(str, caminho_numerado)) 
+                         
 
         else:
             entry_widget.delete("1.0", "end")
