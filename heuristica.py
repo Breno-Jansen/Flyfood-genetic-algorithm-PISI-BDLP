@@ -119,6 +119,8 @@ def executar_calculo(entry_widget):
                 for i in range(len(caminho)- 1):
                     a = int(caminho[i])     # Lê a atual e próxima casa
                     b = int(caminho[i + 1])
+                    if a == b:  # não deveria acontecer
+                        continue
                     try:
                         soma_individual += dicDistancias[(min(a, b), max(a, b))]
                     except KeyError:
@@ -128,19 +130,22 @@ def executar_calculo(entry_widget):
 
 
         def inicializaPopulacao(tamanho, qtdeCidades):
-            # Estrutura base completa, precisa ver variavel tamanho
             populacao = []
-            lista_iniciar = []
+            lista_iniciar = list(range(qtdeCidades))  # todas as cidades
+            print(lista_iniciar)
+            for _ in range(tamanho):
+                # escolhe ponto inicial aleatório
+                ponto_inicial = random.choice(lista_iniciar)
 
-            for i in range(1, qtdeCidades):
-                lista_iniciar.append(i) # Cria uma lista com n cidades de 1 até n
+                # cria lista de cidades sem o ponto inicial
+                restantes = [c for c in lista_iniciar if c != ponto_inicial]
+                random.shuffle(restantes)
 
-            for i in range(tamanho): 
-                random.shuffle(lista_iniciar)   # Embaralha a lista (novo caminho aleatório)
-                individuo_base = "0 "+" ".join(map(str, lista_iniciar))+" 0"
+                # monta indivíduo: começa e termina no ponto inicial
+                individuo_base = str(ponto_inicial) + " " + " ".join(map(str, restantes)) + " " + str(ponto_inicial)
 
-                populacao.append(individuo_base)    # Transforma numa string e adiciona na população
-            
+                populacao.append(individuo_base)
+                print(individuo_base)
             return populacao
     
 
@@ -195,33 +200,72 @@ def executar_calculo(entry_widget):
             b = pai2.split(' ')
             n = len(a)
 
-            # copia as bordas fixas 0 ... 0
-            filho = ['0'] + [None] * (n-2) + ['0']
+            # bordas dos pais devem ser iguais (ciclo fechado), mas o start pode ser diferente entre pais
+            assert a[0] == a[-1], "Pai1 inválido: não fecha ciclo"
+            assert b[0] == b[-1], "Pai2 inválido: não fecha ciclo"
 
-            # dois cortes aleatórios entre 1 e n-2
-            p1, p2 = sorted(random.sample(range(1, n-1), 2))
+            s = a[0]  # start do filho será o start do pai1
 
-            # copia o segmento do pai1
-            for i in range(p1, p2 + 1):
-                filho[i] = a[i]
+            # miolos (sem as bordas)
+            miolo_a = a[1:n-1]
+            miolo_b = b[1:n-1]
 
-            # aplica mapeamento PMX para preencher o restante com base no pai2
-            for i in range(p1, p2 + 1):
-                if b[i] not in filho:
+            # se o start dos pais for diferente, precisamos garantir que nenhum miolo contém 's'
+            # e que ambos os miolos têm o mesmo universo de cidades exceto 's'
+            # remove 's' do miolo_b se por algum motivo entrou
+            miolo_b = [x for x in miolo_b if x != s]
+            # também garanta que miolo_a não tenha 's'
+            miolo_a = [x for x in miolo_a if x != s]
+
+            # universo esperado: todas as cidades exceto s
+            universo = set(a) - {s}
+            # garante comprimento correto
+            if len(miolo_a) != n-2 or len(miolo_b) != n-2:
+                # se algum estiver com tamanho errado, tente reparar completando faltantes pela ordem de b
+                faltantes = [x for x in b[1:n-1] if x != s and x not in miolo_a]
+                miolo_a = miolo_a + faltantes
+                faltantes = [x for x in a[1:n-1] if x != s and x not in miolo_b]
+                miolo_b = miolo_b + faltantes
+                miolo_a = miolo_a[:n-2]
+                miolo_b = miolo_b[:n-2]
+
+            # PMX sobre miolos
+            filho_miolo = [None] * (n-2)
+            p1, p2 = sorted(random.sample(range(0, n-2), 2))
+
+            # copia segmento de miolo_a
+            for i in range(p1, p2+1):
+                filho_miolo[i] = miolo_a[i]
+
+            # mapeamento PMX usando miolo_b
+            for i in range(p1, p2+1):
+                val_b = miolo_b[i]
+                if val_b not in filho_miolo:
                     pos = i
-                    val = a[i]
+                    val = miolo_a[i]
                     while True:
-                        pos = b.index(val)
-                        if filho[pos] is None:
-                            filho[pos] = b[i]
+                        try:
+                            pos = miolo_b.index(val)
+                        except ValueError:
+                            # se não achar (pais estranhos), sai e deixa completar depois
                             break
-                        val = a[pos]
+                        if filho_miolo[pos] is None:
+                            filho_miolo[pos] = val_b
+                            break
+                        val = miolo_a[pos]
 
-            # preenche os espaços vazios com os elementos restantes do pai2
-            for i in range(1, n-1):
-                if filho[i] is None:
-                    filho[i] = b[i]
+            # completa posições vazias com elementos de miolo_b
+            for i in range(0, n-2):
+                if filho_miolo[i] is None:
+                    candidato = miolo_b[i]
+                    if candidato in filho_miolo or candidato == s:
+                        # pega primeiro faltante na ordem de miolo_b
+                        faltantes = [x for x in miolo_b if x not in filho_miolo and x != s]
+                        candidato = faltantes[0] if faltantes else candidato
+                    filho_miolo[i] = candidato
 
+            # reconstrói filho com bordas s ... s
+            filho = [s] + filho_miolo + [s]
             return " ".join(filho)
 
 
@@ -234,10 +278,12 @@ def executar_calculo(entry_widget):
                 pai1 = pais[indice % len(pais)]
                 pai2 = pais[(indice + 1) % len(pais)]
                 filho = crossover_pmx(pai1, pai2)
-                filhos.append(filho)
-                custos_filhos.append(custoCaminho(filho, dicDistancias))
+                # valida antes de aceitar
+                if validar_individuo(filho, qtdeCidades):
+                    filhos.append(filho)
+                    custos_filhos.append(custoCaminho(filho, dicDistancias))
                 indice += 1
-            #print('crossovers: ', len(filhos))
+
             return filhos, custos_filhos
 
         def inversao(caminhos, mutacoes, novos_custos, prop):
@@ -255,6 +301,7 @@ def executar_calculo(entry_widget):
                     tentativas = 0
                     while erro and tentativas < 30:
                         tentativas += 1
+                        # só índices do miolo: 1 .. n_cidades-2
                         inicio = random.randint(1, n_cidades - 3)
                         tamanho = randomGaussiano(
                             media=2,
@@ -267,9 +314,15 @@ def executar_calculo(entry_widget):
                         fim = inicio + tamanho
                         if fim - inicio < 2:
                             continue
+
                         filho = individuo[:]
                         segmento = filho[inicio:fim]
                         filho[inicio:fim] = segmento[::-1]
+
+                        # força bordas iguais ao pai
+                        filho[0] = individuo[0]
+                        filho[-1] = individuo[-1]
+
                         filho_str = " ".join(filho)
                         if filho_str != " ".join(individuo):
                             mutacoes.append(filho_str)
@@ -282,7 +335,7 @@ def executar_calculo(entry_widget):
                 except Exception as e:
                     print(f'erro inversão (i={i}, total={total}): {e}')
 
-                
+
         def mutacao(taxa_mutacao, caminhos, filhos_cross, custos_filhos_cross):
             prop_inversao_cross = 0.60
             prop_inversao_pop = 0.30
@@ -295,14 +348,14 @@ def executar_calculo(entry_widget):
             mutacoes = []
             novos_custos = []
 
-            # inversão população (limitada dentro da função inversao)
+            # inversão população
             inversao(caminhos, mutacoes, novos_custos, inversao_pop)
 
-            # inversão filhos crossover (apenas se houver filhos)
+            # inversão filhos crossover
             if filhos_cross:
                 inversao(filhos_cross, mutacoes, novos_custos, inversao_cross)
 
-            # inserção: não tentar mais do que há em 'caminhos'
+            # inserção
             max_inserts = min(insert_pop, len(caminhos))
             try:
                 for l in range(max_inserts):
@@ -313,13 +366,20 @@ def executar_calculo(entry_widget):
                     tentativas = 0
                     while erro and tentativas < 30:
                         tentativas += 1
+                        # só índices do miolo
                         pos_origem = random.randint(1, n_cidades - 2)
                         pos_destino = random.randint(1, n_cidades - 2)
                         if pos_origem == pos_destino:
                             continue
+
                         filho = individuo_insert[:]
                         cidade = filho.pop(pos_origem)
                         filho.insert(pos_destino, cidade)
+
+                        # força bordas iguais ao pai
+                        filho[0] = individuo_insert[0]
+                        filho[-1] = individuo_insert[-1]
+
                         filho_str = " ".join(filho)
                         if filho_str != " ".join(individuo_insert):
                             mutacoes.append(filho_str)
@@ -329,17 +389,14 @@ def executar_calculo(entry_widget):
                     if erro:
                         mutacoes.append(" ".join(individuo_insert))
                         novos_custos.append(custoCaminho(" ".join(individuo_insert), dicDistancias))
-                    # garantir número exato
 
-                
+                # garantir número exato
                 if len(mutacoes) > taxa_mutacao:
                     mutacoes = mutacoes[:taxa_mutacao]
-                
                 elif len(mutacoes) < taxa_mutacao:
                     while len(mutacoes) < taxa_mutacao:
                         mutacoes.append(caminhos[random.randint(0, len(caminhos) - 1)])
                         novos_custos.append(custoCaminho(mutacoes[-1], dicDistancias))
-                
 
             except Exception as e:
                 print('erro inserção:', e)
@@ -402,7 +459,16 @@ def executar_calculo(entry_widget):
 
             return nova_pop, nova_custos
 
-            
+        def validar_individuo(ind_str, qtdeCidades):
+            genes = list(map(int, ind_str.split()))
+            if genes[0] != genes[-1]:
+                return False
+            s = genes[0]
+            miolo = genes[1:-1]
+            esperado = set(range(qtdeCidades)) - {s}
+            return set(miolo) == esperado and len(miolo) == len(esperado)
+
+
         # Execução das funções
         if caminho_do_arquivo.endswith('.txt'):
             global tamanho_populacao
