@@ -22,7 +22,8 @@ def selecionar_arquivo(entry_widget):
 letraCasas = []
 def executar_calculo(entry_widget):
     contador_de_tempo = time.perf_counter()    
-    global caminho_do_arquivo
+    global caminho_do_arquivo, letraCasas
+    letraCasas = []  # limpa sempre
     # Verifica se um arquivo foi selecionado primeiro
     if not caminho_do_arquivo:
         entry_widget.delete("1.0", "end")
@@ -115,16 +116,13 @@ def executar_calculo(entry_widget):
         def custoCaminho(permutacao, dicDistancias):
                 caminho = permutacao.split(' ') # Cria uma lista com cada casa
                 soma_individual = 0 
-                for i in range(len(caminho)):
+                for i in range(len(caminho)- 1):
+                    a = int(caminho[i])     # Lê a atual e próxima casa
+                    b = int(caminho[i + 1])
                     try:
-                        a = int(caminho[i])     # Lê a atual e próxima casa
-                        b = int(caminho[i + 1])
-                        if a < b:               # Calcula distância
-                            soma_individual += dicDistancias[(a, b)]
-                        elif a > b:   
-                            soma_individual += dicDistancias[(b, a)]
-                    except:
-                        continue                        
+                        soma_individual += dicDistancias[(min(a, b), max(a, b))]
+                    except KeyError:
+                        print(f"Par {(a,b)} não encontrado no dicionário")
                         
                 return soma_individual
 
@@ -191,59 +189,6 @@ def executar_calculo(entry_widget):
 
             return pais
                 
-#        def crossover(caminho1, caminho2):
-#            # transforma pais de string para lista
-#            lista = caminho1.split(' ')
-#            lista_pai = caminho2.split(' ')
-#
-#            # tamanho sem contar o 0 inicial/final
-#            tamanho_lista = len(lista)
-#
-#            # nova lista vazia (mantendo 0 nas pontas)
-#            lista_nova = [None] * tamanho_lista
-#            lista_nova[0] = '0'
-#            lista_nova[-1] = '0'
-#            divisao_corte = tamanho_lista // 2
-#
-#            # crossover só acontece entre as cidades 1..n-2
-#            indice = random.randint(1, tamanho_lista - divisao_corte - 1)   # mesma lógica do seu randint(0,5)
-#            corte_fim = indice + divisao_corte
-#
-#            # copia trecho do pai 1
-#            for i in range(indice, corte_fim):
-#                lista_nova[i] = lista[i]
-#
-#            # índices de leitura circular dos pais
-#            novo_indice = corte_fim % tamanho_lista
-#            indice_listaUm = corte_fim % tamanho_lista
-#
-#            # preenche o resto
-#            for i in range(1, tamanho_lista-1):   # evita posições 0 e final
-#                if lista_nova[i] is None:
-#                    while True:
-#                        elemento_pai = lista_pai[novo_indice]
-#
-#                        # elemento do pai 2 não existe no filho -> coloca
-#                        if elemento_pai not in lista_nova:
-#                            lista_nova[i] = elemento_pai
-#                            novo_indice = (novo_indice + 1) % tamanho_lista
-#                            break
-#
-#                        # elemento já existe -> tenta elemento do pai 1
-#                        else:
-#                            elemento_principal = lista[indice_listaUm]
-#
-#                            if elemento_principal not in lista_nova:
-#                                lista_nova[i] = elemento_principal
-#                                indice_listaUm = (indice_listaUm + 1) % tamanho_lista
-#                                break
-#
-#                            # continua procurando
-#                            novo_indice = (novo_indice + 1) % tamanho_lista
-#                            indice_listaUm = (indice_listaUm + 1) % tamanho_lista
-#
-#            # converte de volta para string
-#            return " ".join(lista_nova)
         
         def crossover_pmx(pai1, pai2):
             a = pai1.split(' ')
@@ -506,6 +451,9 @@ def executar_calculo(entry_widget):
                 print(len(filhos))
             print(melhores_custos_geracoes)
             melhor_camino, melhor_custo = melhorDaGeracao(melhores_das_geracoes, melhores_custos_geracoes)
+            caminho_numerado = melhor_caminho.split(' ')
+            caminho_letrado = [letraCasas[int(cidade)] for cidade in caminho_numerado]
+            caminho_formatado = " -> ".join(caminho_letrado)
 
             
             
@@ -514,7 +462,6 @@ def executar_calculo(entry_widget):
             # AQUI
             print('tsp')
             qtdeCidades = len(dicCasas)
-            
             
             nivel_de_geracoes = 1
             max_geracoes = 80
@@ -553,6 +500,8 @@ def executar_calculo(entry_widget):
                 print(len(filhos))
             print(melhores_custos_geracoes)
             melhor_camino, melhor_custo = melhorDaGeracao(melhores_das_geracoes, melhores_custos_geracoes)
+            caminho_numerado = list(map(int, melhor_caminho.split(' ')))
+            caminho_formatado = " -> ".join(map(str, caminho_numerado))
 
         else:
             entry_widget.delete("1.0", "end")
@@ -566,9 +515,7 @@ def executar_calculo(entry_widget):
         tempo_de_execucao = fim_contador - contador_de_tempo  
 
         
-        caminho_numerado = melhor_caminho.split(' ')
-        caminho_letrado = [letraCasas[int(cidade)] for cidade in caminho_numerado]
-        caminho_formatado = " -> ".join(caminho_letrado)
+        
 
         # Saída final
         output_formatado = (
