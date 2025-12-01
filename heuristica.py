@@ -23,7 +23,7 @@ letraCasas = []
 def executar_calculo(entry_widget):
     contador_de_tempo = time.perf_counter()    
     global caminho_do_arquivo, letraCasas
-    letraCasas = []  # limpa sempre
+    letraCasas.clear()  # limpa sempre
     # Verifica se um arquivo foi selecionado primeiro
     if not caminho_do_arquivo:
         entry_widget.delete("1.0", "end")
@@ -71,7 +71,7 @@ def executar_calculo(entry_widget):
             n = len(cordenadas)
             dicDistancias = {}
 
-            with open ('created_file.tsp', "w", encoding="utf-8") as tsp:
+            with open (f'created_file{int(time.time())}.tsp', "w", encoding="utf-8") as tsp:
                 for i in range(0, n-1): # linha inicial até n-1 pois a linha n não terá aresta
                     
                     for j in range(i+1, n): # coluna i+1 até a ultima
@@ -479,7 +479,7 @@ def executar_calculo(entry_widget):
             populacao = []
 
             tsp, dicDistancias, dicCasas = tornarTSPLIB() 
-            #print(dicCasas)
+            print(len(dicCasas))
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
             
