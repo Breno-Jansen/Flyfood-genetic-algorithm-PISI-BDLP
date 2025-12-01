@@ -42,7 +42,7 @@ def executar_calculo(entry_widget):
             cordenadas = []
 
             with open(caminho_do_arquivo, "r", encoding="utf-8") as arquivo:
-                matriz_linhas = arquivo.readlines()
+                matriz_linhas = [linha.strip() for linha in arquivo.readlines()]
                 linha0_entradas = matriz_linhas[0]
                 separar_linhas_colunas = linha0_entradas.split(' ')
                 qntd_linhas = int(separar_linhas_colunas[0])
