@@ -23,7 +23,7 @@ letraCasas = []
 def executar_calculo(entry_widget):
     contador_de_tempo = time.perf_counter()    
     global caminho_do_arquivo, letraCasas
-    letraCasas.clear()  # limpa sempre
+    letraCasas = []  # limpa sempre
     # Verifica se um arquivo foi selecionado primeiro
     if not caminho_do_arquivo:
         entry_widget.delete("1.0", "end")
@@ -42,7 +42,7 @@ def executar_calculo(entry_widget):
             cordenadas = []
 
             with open(caminho_do_arquivo, "r", encoding="utf-8") as arquivo:
-                matriz_linhas = [linha.strip() for linha in arquivo.readlines()]
+                matriz_linhas = arquivo.readlines()
                 linha0_entradas = matriz_linhas[0]
                 separar_linhas_colunas = linha0_entradas.split(' ')
                 qntd_linhas = int(separar_linhas_colunas[0])
@@ -70,8 +70,8 @@ def executar_calculo(entry_widget):
             dicCasas = dict(zip(letraCasas,cordenadas))
             n = len(cordenadas)
             dicDistancias = {}
-            tsp_name = f'created_file_{int(time.time())}.tsp'
-            with open (tsp_name, "w", encoding="utf-8") as tsp:
+
+            with open ('created_file.tsp', "w", encoding="utf-8") as tsp:
                 for i in range(0, n-1): # linha inicial até n-1 pois a linha n não terá aresta
                     
                     for j in range(i+1, n): # coluna i+1 até a ultima
@@ -82,7 +82,7 @@ def executar_calculo(entry_widget):
                         dicDistancias[(i, j)] = distancia
                     tsp.write('\n')
 
-            with open (tsp_name, "r", encoding="utf-8") as tsp_read:
+            with open ('created_file.tsp', "r", encoding="utf-8") as tsp_read:
                 return tsp_read.readlines(), dicDistancias, dicCasas
         
         def lerTSP(caminho_arquivo):
@@ -105,8 +105,6 @@ def executar_calculo(entry_widget):
                 for j, valor in enumerate(valores):
                     dicDistancias[(i, i + j + 1)] = int(valor)
 
-            # Como não temos as casas/letras no .tsp, apenas criamos um mapeamento simples
-            # Exemplo: {0: (0,0), 1: (1,0), ...} ou apenas índices
             dicCasas = {str(k): k for k in range(n)}
 
             return linhas_tsp, dicDistancias, dicCasas
@@ -200,7 +198,7 @@ def executar_calculo(entry_widget):
             b = pai2.split(' ')
             n = len(a)
 
-            # bordas dos pais devem ser iguais (ciclo fechado), mas o start pode ser diferente entre pais
+            # bordas dos pais devem ser iguais (ciclo fechado)
             assert a[0] == a[-1], "Pai1 inválido: não fecha ciclo"
             assert b[0] == b[-1], "Pai2 inválido: não fecha ciclo"
 
@@ -210,8 +208,6 @@ def executar_calculo(entry_widget):
             miolo_a = a[1:n-1]
             miolo_b = b[1:n-1]
 
-            # se o start dos pais for diferente, precisamos garantir que nenhum miolo contém 's'
-            # e que ambos os miolos têm o mesmo universo de cidades exceto 's'
             # remove 's' do miolo_b se por algum motivo entrou
             miolo_b = [x for x in miolo_b if x != s]
             # também garanta que miolo_a não tenha 's'
@@ -446,7 +442,7 @@ def executar_calculo(entry_widget):
             nova_pop = []
             nova_custos = []
 
-            k = 3  # tamanho do torneio — bom equilíbrio (3 ou 4 recomendado)
+            k = 3
 
             for _ in range(tamanho_populacao):
                 # seleciona k candidatos
@@ -479,7 +475,7 @@ def executar_calculo(entry_widget):
             populacao = []
 
             tsp, dicDistancias, dicCasas = tornarTSPLIB() 
-            print(len(dicCasas))
+            #print(dicCasas)
             #print(*tsp, sep='')
             qtdeCidades = len(dicCasas)
             
