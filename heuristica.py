@@ -12,7 +12,7 @@ def selecionar_arquivo(entry_widget):
     """
     global caminho_do_arquivo
     #escolher arquivo txt ou tsp
-    filetypes = (('Text files', '*.txt'), ('TSP files', '*.tsp'))
+    filetypes = (('All Files', '*.*'), ('tsp files', '*.tsp'))
     fpath = filedialog.askopenfilename(title="Selecione o arquivo de matriz", filetypes=filetypes,)
     if fpath:
         caminho_do_arquivo = fpath
@@ -163,7 +163,7 @@ def executar_calculo(entry_widget):
             melhor_custo = custos[melhor_indice]
             return custos, melhor_caminho, melhor_custo
             
-        def torneioPais(populacao, custos, taxa_crossover, melhor_caminho=None, k=2,):
+        def torneioPais(populacao, custos, taxa_crossover, melhor_caminho=None, k=4,):
             """
             Seleção por torneio com fitness integrado.
             Fitness = 1 / custo  (menor custo ⇒ maior aptidão)
@@ -484,8 +484,8 @@ def executar_calculo(entry_widget):
             qtdeCidades = len(dicCasas)
             
             nivel_de_geracoes = 1
-            max_geracoes = 80
-            tamanho_populacao = 300
+            max_geracoes = 70
+            tamanho_populacao = 400
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             custos, melhor_caminho, melhor_custo = (calculaAptidao(populacao, dicDistancias))
             dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
@@ -497,7 +497,7 @@ def executar_calculo(entry_widget):
             
                 #taxa_mutacao = int(tamanho_populacao * (1 - (nivel_de_geracoes / max_geracoes)))
                 #taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
-                taxa_mutacao = int(tamanho_populacao * (random.randint(2, 10)*0.01))
+                taxa_mutacao = int(tamanho_populacao * (random.randint(2, 6)*0.01))
                 taxa_crossover = int(tamanho_populacao * 0.90)
                 nivel_de_geracoes += 1  # Aumenta o nivel da geração
                 
@@ -533,8 +533,8 @@ def executar_calculo(entry_widget):
             qtdeCidades = len(dicCasas)
             
             nivel_de_geracoes = 1
-            max_geracoes = 600
-            tamanho_populacao = 800
+            max_geracoes = 2000
+            tamanho_populacao = 1000
             populacao = inicializaPopulacao(tamanho_populacao, qtdeCidades)
             custos, melhor_caminho, melhor_custo = (calculaAptidao(populacao, dicDistancias))
             dic_caminhos = dict(zip(populacao, custos)) # Adiciona todos os caminhos num dicionário
@@ -546,8 +546,8 @@ def executar_calculo(entry_widget):
             
                 #taxa_mutacao = int(tamanho_populacao * (1 - (nivel_de_geracoes / max_geracoes)))
                 #taxa_crossover = tamanho_populacao  *  (nivel_de_geracoes / max_geracoes)
-                taxa_mutacao = int(tamanho_populacao * (random.randint(1, 6)*0.01))
-                taxa_crossover = int(tamanho_populacao * 0.90)
+                taxa_mutacao = int(tamanho_populacao * (random.randint(2, 6)*0.01))
+                taxa_crossover = int(tamanho_populacao * 0.85)
                 nivel_de_geracoes += 1  # Aumenta o nivel da geração
                 
                 if taxa_crossover != 0:
@@ -594,11 +594,15 @@ def executar_calculo(entry_widget):
                          
 
         else:
+            mensagem_erro = (
+                f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
+                "EX:\n"
+                "33\n"
+                "C00\n00B\nR0A\n")
             entry_widget.delete("1.0", "end")
-            entry_widget.insert("1.0", f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
-            "EX:\n"
-            "33\n"
-            "C00\n00B\nR0A\n")
+            entry_widget.insert("1.0", mensagem_erro)
+            entry_widget.update_idletasks()
+           
 
         # cronometro de execução
         fim_contador = time.perf_counter()
@@ -621,10 +625,12 @@ def executar_calculo(entry_widget):
         
     except Exception as e:
         print(e)
-        if not MemoryError:
-            entry_widget.delete("1.0", "end")
-            entry_widget.insert("1.0", f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
+        
+        mensagem_erro = (
+            f"Ocorreu um erro:\nTecnicamente: {e}\n\nVerifique se o formato do arquivo .txt está na forma certa:\n"
             "EX:\n"
             "33\n"
             "C00\n00B\nR0A\n")
-
+        entry_widget.delete("1.0", "end")
+        entry_widget.insert("1.0", mensagem_erro)
+        entry_widget.update_idletasks()
