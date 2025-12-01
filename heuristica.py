@@ -70,8 +70,8 @@ def executar_calculo(entry_widget):
             dicCasas = dict(zip(letraCasas,cordenadas))
             n = len(cordenadas)
             dicDistancias = {}
-
-            with open (f'created_file{int(time.time())}.tsp', "w", encoding="utf-8") as tsp:
+            tsp_name = f'created_file_{int(time.time())}.tsp'
+            with open (tsp_name, "w", encoding="utf-8") as tsp:
                 for i in range(0, n-1): # linha inicial até n-1 pois a linha n não terá aresta
                     
                     for j in range(i+1, n): # coluna i+1 até a ultima
@@ -82,7 +82,7 @@ def executar_calculo(entry_widget):
                         dicDistancias[(i, j)] = distancia
                     tsp.write('\n')
 
-            with open ('created_file.tsp', "r", encoding="utf-8") as tsp_read:
+            with open (tsp_name, "r", encoding="utf-8") as tsp_read:
                 return tsp_read.readlines(), dicDistancias, dicCasas
         
         def lerTSP(caminho_arquivo):
