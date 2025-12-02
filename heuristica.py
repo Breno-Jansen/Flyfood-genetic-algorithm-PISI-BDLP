@@ -71,7 +71,8 @@ def executar_calculo(entry_widget):
             n = len(cordenadas)
             dicDistancias = {}
 
-            with open ('created_file.tsp', "w", encoding="utf-8") as tsp:
+            with open('created_file.tsp', "w", newline="\n", encoding="utf-8") as tsp:
+                tsp.truncate(0)  # garante que não sobra nada
                 for i in range(0, n-1): # linha inicial até n-1 pois a linha n não terá aresta
                     
                     for j in range(i+1, n): # coluna i+1 até a ultima
@@ -82,8 +83,9 @@ def executar_calculo(entry_widget):
                         dicDistancias[(i, j)] = distancia
                     tsp.write('\n')
 
-            with open ('created_file.tsp', "r", encoding="utf-8") as tsp_read:
-                return tsp_read.readlines(), dicDistancias, dicCasas
+            with open('created_file.tsp', "r", encoding="utf-8") as tsp_read:
+                linhas = [linha.strip() for linha in tsp_read if linha.strip()]
+                return linhas, dicDistancias, dicCasas
         
         def lerTSP(caminho_arquivo):
             """
