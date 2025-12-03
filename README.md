@@ -30,10 +30,8 @@
 5.  [Algoritmo de Otimização](#-algoritmo-de-otimização)
 6.  [Suporte a Arquivos TSPLIB](#-suporte-a-arquivos-tsplib)
 7.  [Como Executar](#-como-executar)
-8.  [Formato do Arquivo de Entrada (Mapa de Grade)](#-formato-do-arquivo-de-entrada-mapa-de-grade)
-9.  [Como Contribuir](#-como-contribuir)
-10. [Licença](#-licença)
-
+8.  [Formato do Arquivo de Entrada (Mapa de Grade](#-formato-do-arquivo-de-entrada-mapa-de-grade)
+9.  [Artigo cientifico](#-artigo-cientifico)
 ---
 
 ## 🎯 Sobre o Projeto
@@ -168,18 +166,14 @@ R 0 A 0<br>
 
 ---
 
-## 🤝 Como Contribuir
+## 📜 Artigo Científico
 
-Fico feliz que queira contribuir! Siga estes passos:
+O desenvolvimento do **Fly Food** e a aplicação do **Algoritmo Genético** para a solução do PCV foram detalhados em um artigo científico. Este artigo descreve a metodologia, a implementação do *crossover* PMX e das mutações (*Swap* e *Insert*), além de apresentar os resultados comparativos de desempenho em relação a outras abordagens.
 
-1.  Faça um *fork* do projeto.
-2.  Crie uma *branch* para sua funcionalidade (`git checkout -b feature/IncrivelNovaFeature`).
-3.  Faça *commit* de suas mudanças (`git commit -m 'Adiciona IncrivelNovaFeature'`).
-4.  Envie para a *branch* (`git push origin feature/IncrivelNovaFeature`).
-5.  Abra um *Pull Request* (PR).
+Para acesso completo ao material e à análise de dados, o PDF está disponível abaixo:
 
----
+* **🔗 Link para o Artigo Completo (PDF):**
+    [Clique aqui para visualizar o PDF do Artigo Científico](https://drive.google.com/file/d/1xAJZ3yPG_-6kCIsO4jt7Iox3XkFw8eRz/view?usp=sharing)
 
-## 📝 Licença
+* **📝 Projeto FlyFood:** *Otimização de Rotas de Entrega utilizando Algoritmo Genético em Ambientes de Grade e TSPLIB*
 
-O projeto está sob a licença **MIT** - veja o arquivo `LICENSE.md` para mais detalhes.
