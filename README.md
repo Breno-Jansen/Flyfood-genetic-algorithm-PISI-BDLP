@@ -30,7 +30,7 @@
 5.  [Algoritmo de Otimização](#-algoritmo-de-otimização)
 6.  [Suporte a Arquivos TSPLIB](#-suporte-a-arquivos-tsplib)
 7.  [Como Executar](#-como-executar)
-8.  [Formato do Arquivo de Entrada (Mapa de Grade](#-formato-do-arquivo-de-entrada-mapa-de-grade)
+8.  [Formato do Arquivo de Entrada (Mapa de Grade)](#-formato-do-arquivo-de-entrada-mapa-de-grade)
 9.  [Artigo cientifico](#-artigo-cientifico)
 ---
 
